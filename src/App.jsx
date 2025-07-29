@@ -42,6 +42,10 @@ function App() {
   };
 
   useEffect(() => {
+    fetchMoviesHandler();
+  }, []);
+
+  useEffect(() => {
     if (trying) {
       retryTimeoutRef.current = setTimeout(() => {
         fetchMoviesHandler();
