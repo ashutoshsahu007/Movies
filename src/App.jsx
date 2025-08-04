@@ -1,26 +1,24 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import MoviesList from "./components/MoviesList";
+import AddMovie from "./components/AddMovie";
 import "./App.css";
-import "./index.css";
+// import "./index.css";
 
 function App() {
   const [movies, setMovies] = useState([]);
   const [loader, setLoader] = useState(false);
   const [error, setError] = useState(null);
-  const [trying, setTrying] = useState(false);
-  const retryTimeoutRef = useRef();
 
-  const fetchMoviesHandler = async () => {
+  const fetchMoviesHandler = useCallback(async () => {
     // Show loader only on first attempt, not during retry
-    if (!trying) setLoader(true);
+    setLoader(true);
     setError(null);
-    setTrying(false);
 
     try {
       const res = await fetch("https://swapi.info/api/films");
 
       if (!res.ok) {
-        throw new Error("Something went wrong... Retrying");
+        throw new Error("Failed to fetch");
       }
 
       const data = await res.json();
@@ -35,39 +33,27 @@ function App() {
       setError(null);
     } catch (error) {
       setError(error.message);
-      setTrying(true); // start retrying
     } finally {
       setLoader(false);
     }
-  };
-
-  useEffect(() => {
-    fetchMoviesHandler();
   }, []);
 
   useEffect(() => {
-    if (trying) {
-      retryTimeoutRef.current = setTimeout(() => {
-        fetchMoviesHandler();
-      }, 5000);
-    }
+    fetchMoviesHandler();
+  }, [fetchMoviesHandler]);
 
-    return () => clearTimeout(retryTimeoutRef.current);
-  }, [trying]);
-
-  const cancelRetryHandler = () => {
-    clearTimeout(retryTimeoutRef.current);
-    setTrying(false);
-    setError("Retry canceled by the user.");
+  const addMovieHandler = (movieObj) => {
+    console.log("movieObj", movieObj);
   };
 
   return (
     <React.Fragment>
       <section>
-        <button onClick={fetchMoviesHandler}>Fetch Movies</button>
-        {trying && <button onClick={cancelRetryHandler}>Cancel Retry</button>}
+        <AddMovie onAddMovie={addMovieHandler} />
       </section>
-
+      <section>
+        <button onClick={fetchMoviesHandler}>Fetch Movies</button>
+      </section>
       <section>
         {loader && <p>Loading...</p>}
         {!loader && error && <p style={{ color: "red" }}>{error}</p>}
